@@ -25,7 +25,6 @@ class ProudIssue extends \ProudPlugin {
     $this->hook( 'admin_init', 'issue_admin' );
     $this->hook( 'save_post', 'add_issue_fields', 10, 2 );
     $this->hook( 'rest_api_init', 'issue_rest_support' );
-    $this->hook( 'gform_loaded', 'gravityform_approvals_load', 5 );
   }
 
   public function create_issue() {
@@ -108,17 +107,71 @@ class ProudIssue extends \ProudPlugin {
     $this->fields['icon'] = [
       '#type' => 'fa-icon',
       '#title' => __('Icon'),
-      '#description' => __('Selete the icon to use in the Actions app'),
+      '#description' => __('Select the icon to use in the Actions app'),
       '#name' => 'icon',
       '#value' => get_post_meta( $id, 'icon', true ),
     ];
 
+    $this->fields['issue_category_type'] = [
+      '#type' => 'radios',
+      '#title' => __('Type'),
+      '#name' => 'issue_category_type',
+      '#options' => [
+        'form' => _x('Form'),
+        'iframe' => _x('Iframe'),
+        'link' => _x('External link'),
+      ],
+      '#value' => get_post_meta( $id, 'issue_category_type', true ),
+    ];
+
     $this->fields['form'] = [
       '#type' => 'gravityform',
-      '#title' => __('Form'),
+      '#title' => _x('Form'),
       '#description' => __('Select a form. <a href="admin.php?page=gf_edit_forms" target="_blank">Create a new form</a>.'),
       '#name' => 'form',
       '#value' => get_post_meta( $id, 'form', true ),
+      '#states' => [
+        'visible' => [
+          'issue_category_type' => [
+            'operator' => '==',
+            'value' => ['form'],
+            'glue' => '||'
+          ],
+        ],
+      ],
+    ];
+
+    $this->fields['url'] = [
+      '#type' => 'text',
+      '#title' => _x('Link URL'),
+      '#name' => 'url',
+      '#value' => get_post_meta( $id, 'url', true ),
+      '#states' => [
+        'visible' => [
+          'issue_category_type' => [
+            'operator' => '==',
+            'value' => ['link'],
+            'glue' => '||'
+          ],
+        ],
+      ],
+    ];
+
+    $this->fields['iframe'] = [
+      '#type' => 'text',
+      '#title' => _x('Iframe URL'),
+      '#description' => __('Enter the URL for the Iframe (the src attribute). Only applies if form is blank.'),
+      '#name' => 'iframe',
+      '#value' => get_post_meta( $id, 'iframe', true ),
+      '#states' => [
+        'visible' => [
+          'issue_category_type' => [
+            'operator' => '==',
+            'value' => ['iframe'],
+            'glue' => '||'
+          ],
+        ],
+      ],
     ];
 
     return $this->fields;
@@ -145,19 +198,5 @@ class ProudIssue extends \ProudPlugin {
   }
 
 
-  /**
-   * Calls class-gf-approvals.php on gform_loaded
-   */
-  public static function gravityform_approvals_load() {
-
-    if ( ! method_exists( 'GFForms', 'include_feed_addon_framework' ) ) {
-      return;
-    }
-
-    require_once( 'class-gf-approvals.php' );
-    GFAddOn::register( 'GF_Approvals' );
-  }
-
-
 } // class
-
+$Issue = new ProudIssue;
