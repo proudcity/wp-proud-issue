@@ -23,9 +23,17 @@ class ProudIssue extends \ProudPlugin {
 
     $this->hook( 'init', 'create_issue' );
     $this->hook( 'admin_init', 'issue_admin' );
+    $this->hook( 'admin_enqueue_scripts', 'agency_assets' );
     $this->hook( 'save_post', 'add_issue_fields', 10, 2 );
     $this->hook( 'rest_api_init', 'issue_rest_support' );
   }
+
+  //add assets
+  public function agency_assets() {
+    $path = plugins_url('assets/',__FILE__);
+    wp_enqueue_script('proud-issue/js', $path . 'js/proud-issue.js', ['proud','jquery'], null, true);
+  }
+
 
   public function create_issue() {
       $labels = array(
@@ -61,7 +69,7 @@ class ProudIssue extends \ProudPlugin {
           'show_in_rest'       => true,
           'rest_base'          => 'issues',
           'rest_controller_class' => 'WP_REST_Posts_Controller',
-          'supports'           => array( 'title' )
+          'supports'           => array( 'title', 'editor' )
       );
 
       register_post_type( 'issue', $args );
