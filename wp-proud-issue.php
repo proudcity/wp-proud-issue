@@ -117,16 +117,16 @@ class ProudIssue extends \ProudPlugin {
       '#title' => __('Type'),
       '#name' => 'issue_category_type',
       '#options' => [
-        'form' => _x('Form'),
-        'iframe' => _x('Iframe'),
-        'link' => _x('External link'),
+        'form' => __('Form'),
+        'iframe' => __('Iframe'),
+        'link' => __('External link'),
       ],
       '#value' => get_post_meta( $id, 'issue_category_type', true ),
     ];
 
     $this->fields['form'] = [
       '#type' => 'gravityform',
-      '#title' => _x('Form'),
+      '#title' => __('Form'),
       '#description' => __('Select a form. <a href="admin.php?page=gf_edit_forms" target="_blank">Create a new form</a>.'),
       '#name' => 'form',
       '#value' => get_post_meta( $id, 'form', true ),
@@ -143,7 +143,7 @@ class ProudIssue extends \ProudPlugin {
 
     $this->fields['url'] = [
       '#type' => 'text',
-      '#title' => _x('Link URL'),
+      '#title' => __('Link URL'),
       '#name' => 'url',
       '#value' => get_post_meta( $id, 'url', true ),
       '#states' => [
@@ -159,7 +159,7 @@ class ProudIssue extends \ProudPlugin {
 
     $this->fields['iframe'] = [
       '#type' => 'text',
-      '#title' => _x('Iframe URL'),
+      '#title' => __('Iframe URL'),
       '#description' => __('Enter the URL for the Iframe (the src attribute). Only applies if form is blank.'),
       '#name' => 'iframe',
       '#value' => get_post_meta( $id, 'iframe', true ),
@@ -180,7 +180,7 @@ class ProudIssue extends \ProudPlugin {
 
   public function display_issue_meta_box( $issue ) {
     $this->build_fields($issue->ID);
-    $form = new \Proud\Core\FormHelper( $this->key, $this->fields );
+    $form = new \Proud\Core\FormHelper( 'proud-issue', $this->fields );
     $form->printFields();
   }
 
