@@ -22,9 +22,7 @@ class ProudIssue extends \ProudPlugin {
   public function __construct() {
 
     $this->hook( 'init', 'create_issue' );
-    $this->hook( 'admin_init', 'issue_admin' );
     $this->hook( 'admin_enqueue_scripts', 'agency_assets' );
-    $this->hook( 'save_post', 'add_issue_fields', 10, 2 );
     $this->hook( 'rest_api_init', 'issue_rest_support' );
   }
 
@@ -75,14 +73,6 @@ class ProudIssue extends \ProudPlugin {
       register_post_type( 'issue', $args );
   }
 
-  public function issue_admin() {
-    add_meta_box( 'issue_meta_box',
-      'Issue information',
-      array($this, 'display_issue_meta_box'),
-      'issue', 'normal', 'high'
-    );
-  }
-
   public function issue_rest_support() {
     register_api_field( 'issue',
           'meta',
@@ -99,45 +89,70 @@ class ProudIssue extends \ProudPlugin {
    * Add metadata to t$forms = RGFormsModel::get_forms( 1, 'title' );he post response
    */
   public function issue_rest_metadata( $object, $field_name, $request ) {
-      $return = array();
-      $this->build_fields($object[ 'id' ]);
-      foreach ($this->fields as $key => $field) {
-        if ($value = get_post_meta( $object[ 'id' ], $key, true )) {
-          $return[$key] = $value;
-        }
-      }
-      return $return;
+    $IssueMeta = new IssuesMeta;
+    return $IssueMeta->get_options( $object[ 'id' ] );
   }
 
-  public function build_fields($id) {
+} // class
+$Issue = new ProudIssue;
+
+
+// Issues meta box
+class IssuesMeta extends \ProudMetaBox {
+
+  public $options = [  // Meta options, key => default                             
+    'icon' => '',
+    'issue_category_type' => '',
+    'form' => '',
+    'url' => '',
+    'iframe' => '',
+  ];
+
+  public function __construct() {
+    parent::__construct( 
+      'issue', // key
+      'Issue information', // title
+      'issue', // screen
+      'normal',  // position
+      'high' // priority
+    );
+  }
+
+  /**
+   * Called on form creation
+   * @param $displaying : false if just building form, true if about to display
+   * Use displaying:true to do any difficult loading that should only occur when
+   * the form actually will display
+   */
+  public function set_fields( $displaying ) {
+
+    // Already set, no loading necessary
+    if( $displaying ) {
+      return;
+    }
+
     $this->fields = [];
 
     $this->fields['icon'] = [
       '#type' => 'fa-icon',
       '#title' => __('Icon'),
       '#description' => __('Select the icon to use in the Actions app'),
-      '#name' => 'icon',
-      '#value' => get_post_meta( $id, 'icon', true ),
     ];
 
     $this->fields['issue_category_type'] = [
       '#type' => 'radios',
       '#title' => __('Type'),
-      '#name' => 'issue_category_type',
       '#options' => [
         'form' => __('Form'),
         'iframe' => __('Iframe'),
         'link' => __('External link'),
       ],
-      '#value' => get_post_meta( $id, 'issue_category_type', true ),
     ];
 
     $this->fields['form'] = [
       '#type' => 'gravityform',
       '#title' => __('Form'),
       '#description' => __('Select a form. <a href="admin.php?page=gf_edit_forms" target="_blank">Create a new form</a>.'),
-      '#name' => 'form',
-      '#value' => get_post_meta( $id, 'form', true ),
       '#states' => [
         'visible' => [
           'issue_category_type' => [
@@ -152,8 +167,6 @@ class ProudIssue extends \ProudPlugin {
     $this->fields['url'] = [
       '#type' => 'text',
       '#title' => __('Link URL'),
-      '#name' => 'url',
-      '#value' => get_post_meta( $id, 'url', true ),
       '#states' => [
         'visible' => [
           'issue_category_type' => [
@@ -169,8 +182,6 @@ class ProudIssue extends \ProudPlugin {
       '#type' => 'text',
       '#title' => __('Iframe URL'),
       '#description' => __('Enter the URL for the Iframe (the src attribute). Only applies if form is blank.'),
-      '#name' => 'iframe',
-      '#value' => get_post_meta( $id, 'iframe', true ),
       '#states' => [
         'visible' => [
           'issue_category_type' => [
@@ -181,30 +192,22 @@ class ProudIssue extends \ProudPlugin {
         ],
       ],
     ];
-
-    return $this->fields;
-  }
-
-
-  public function display_issue_meta_box( $issue ) {
-    $this->build_fields($issue->ID);
-    $form = new \Proud\Core\FormHelper( 'proud-issue', $this->fields );
-    $form->printFields();
   }
 
   /**
-   * Saves contact metadata fields 
+   * Displays the Issues metadata fieldset.
    */
-  public function add_issue_fields( $id, $issue ) {
-    if ( $issue->post_type == 'issue' ) {
-      foreach ($this->build_fields($id) as $key => $field) {
-        if ( !empty( $_POST[$key] ) ) {  // @todo: check if it has been set already to allow clearing of value
-          update_post_meta( $id, $key, $_POST[$key] );
-        }
-      }
-    }
+  public function settings_content( $post ) {
+    // Call parent
+    parent::settings_content( $post );
+    // Add js settings
+    global $proudcore;
+    $settings = $this->get_field_names( ['issue_category_type'] );
+    $proudcore->addJsSettings( [
+      'proud_issue' => $settings
+    ] );
   }
+}
 
-
-} // class
-$Issue = new ProudIssue;
+if( is_admin() )
+  new IssuesMeta;
