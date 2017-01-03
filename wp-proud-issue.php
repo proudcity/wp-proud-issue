@@ -74,7 +74,7 @@ class ProudIssue extends \ProudPlugin {
   }
 
   public function issue_rest_support() {
-    register_api_field( 'issue',
+    register_rest_field( 'issue',
           'meta',
           array(
               'get_callback'    => array( $this, 'issue_rest_metadata' ),
