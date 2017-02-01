@@ -146,6 +146,7 @@ class IssuesMeta extends \ProudMetaBox {
         'form' => __('Form'),
         'iframe' => __('Iframe'),
         'link' => __('External link'),
+        'custom' => __('Custom text'),
       ],
     ];
 
